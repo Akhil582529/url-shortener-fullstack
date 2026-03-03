@@ -1,8 +1,6 @@
 import express from 'express'
 const app = express();
 
-// app.use(express.json());
-
 const validator = async (req, res, next) => {
     console.log("Validator is running");
     let {url} = req.body;
@@ -12,11 +10,7 @@ const validator = async (req, res, next) => {
     }
 
     url = url.trim();
-
-    if(!url.startsWith("https://") && !url.startsWith("http://")){
-        url = "https://"+url;
-    }
-
+    
     let parsed; 
     try {
         parsed = new URL(url);
