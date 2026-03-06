@@ -10,7 +10,11 @@ const validator = async (req, res, next) => {
     }
 
     url = url.trim();
-    
+
+    // if(!url.startsWith("https://") && !url.startsWith("http://")){
+    //     url = "https://"+url;
+    // }
+
     let parsed; 
     try {
         parsed = new URL(url);
