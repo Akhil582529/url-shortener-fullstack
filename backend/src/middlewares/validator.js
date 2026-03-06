@@ -1,46 +1,57 @@
-import express from 'express'
-const app = express();
+import net from 'net';
 
 const validator = async (req, res, next) => {
     console.log("Validator is running");
-    let {url} = req.body;
+    let { url } = req.body;
 
-    if(!url){
-        return res.status(400).json({error: "URL is not entered"});
+    // No URL is passed
+    if (!url) {
+        return res.status(400).json({ error: "URL is not entered" });
     }
 
     url = url.trim();
 
-    // if(!url.startsWith("https://") && !url.startsWith("http://")){
-    //     url = "https://"+url;
-    // }
+    // add protocol
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        try {
+        new URL(url);
+        } catch {
+        url = "https://" + url;
+        }
+    }
 
-    let parsed; 
+    let parsed;
     try {
         parsed = new URL(url);
-    } catch (error) {
-        return res.status(400).json({error: "URL is in wrong format"});
+    } catch (err) {
+        return res.status(400).json({ error: "URL is in wrong format" });
     }
 
-    if(!['https:', 'http:'].includes(parsed.protocol.toLowerCase())){
-        return res.status(400).json({error: "only HTTPs and HTTP protocols are allowed"})
+    const parsedProtocol = parsed.protocol.toLowerCase();
+    if (parsedProtocol !== 'http:' && parsedProtocol !== 'https:') {
+        return res.status(400).json({ error: "Only HTTP and HTTPS protocols are acceptable" });
     }
 
-    let parsedHostname = parsed.hostname.toLowerCase();
-    let parsedProtocol = parsed.protocol.toLowerCase();
+    const parsedHostname = parsed.hostname.toLowerCase();
+    if (!parsedHostname || parsedHostname.includes(' ')) {
+        return res.status(400).json({ error: "URL is in wrong format" });
+    }
 
-    const extensions = ['.rar', 'exe', '.bat', '.zip', '.cmd' , '.sh'];
+    if (net.isIPv4(parsedHostname) || net.isIPv6(parsedHostname)) {
+        return res.status(400).json({ error: "IP addresses are not allowed" });
+    }
+
+    const extensions = ['.rar', '.exe', '.bat', '.zip', '.cmd', '.sh'];
     const pathName = parsed.pathname.toLowerCase();
-    for(const ext of extensions){
-        if(pathName.endsWith(ext)){
-            return res.status(400).json({error: "Executable files are not allowed"});
+    for (const ext of extensions) {
+        if (pathName.endsWith(ext)) {
+        return res.status(400).json({ error: "Executable files are not allowed" });
         }
     }
 
     req.body.url = parsed.toString();
-    console.log("Validator completes running");
+    console.log("Validator completed running");
     next();
-
-}
+};
 
 export default validator;
